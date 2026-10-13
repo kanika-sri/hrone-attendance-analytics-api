@@ -44,6 +44,8 @@ def bounds(month):
     if not re.fullmatch(r'\d{4}-(0[1-9]|1[0-2])', month or ''):
         invalid('Expected month YYYY-MM')
     y, m = map(int, month.split('-'))
+    if y < 1:
+        invalid('Expected month YYYY-MM')
     a = date(y, m, 1)
     b = date(y, m, calendar.monthrange(y, m)[1])
     return a, b
@@ -384,7 +386,7 @@ def employee_monthly(emp_code: str, month: str):
             'leave_days': r.get('leave_days', 0), 'late_count': r.get('late_count', 0),
             'total_late_minutes': r.get('total_late_minutes', 0),
             'total_overtime_minutes': r.get('total_overtime_minutes', 0),
-            'attendance_pct': rounded(Decimal(str(present)) * 100 / wd) if wd else None}
+            'attendance_pct': rounded(Decimal(str(present)) * 100 / wd, 4) if wd else None}
 
 
 def department_pipeline(month, department=None):
