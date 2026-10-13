@@ -32,23 +32,38 @@ The API supports employee management, attendance punch-in and punch-out, attenda
 
 ## Verification
 
-The following checks were performed against a running local MongoDB instance:
+The following checks were performed against a running local MongoDB instance (MongoDB 9.0.2):
 
-- Python syntax and route registration
-- Employee creation and duplicate employee handling
-- Attendance punch-in and punch-out
-- Attendance derivation and timestamp conversion
+- Python syntax and all 12 API route registrations
+- Employee creation and duplicate handling
+- Attendance punch-in, punch-out, timestamp conversion, and derived-field calculations
 - Monthly employee analytics and department summaries
 - Late leaderboard ranking and cutoff ties
-- Department trend generation, `$densify`, and moving averages
-- Aggregation explain plans for five supported queries
-- Concurrent punch-in: one successful creation and nine conflicts
-- Concurrent punch-out: one successful update and nine conflicts
-- Concurrent regularization: two successful updates with two additional history entries
+- Department trend generation using `$densify` and moving averages
+- Concurrent punch-in: one HTTP 201 and nine HTTP 409 responses
+- Concurrent punch-out: one HTTP 200 and nine HTTP 409 responses
+- Concurrent regularization: two successful corrections with two additional audit-history entries
+- Automated read-only API smoke tests: 10/10 passed, including pagination and invalid-date validation
+- Invalid month validation (`0000-01`): HTTP 422
+- Monthly attendance percentage rounding: verified to four decimal places
 
-Local explain checks reported `IXSCAN` and no `COLLSCAN` for the tested queries.
+### 100,000-Record Performance Benchmark
 
-These checks were performed on a small local dataset. They do not constitute full verification of every R1–R10 edge case, performance with 100,000 attendance records, or all hidden evaluation scenarios.
+An isolated local benchmark was executed using 200 synthetic employees and 100,000 synthetic attendance records in a separate MongoDB database (`attendance_perf_test`). The original application database remained unchanged.
+
+| Endpoint | HTTP Status | Response Time |
+|---|---|---|
+| Attendance listing | 200 | 29 ms |
+| Employee monthly summary | 200 | 32 ms |
+| Department summary | 200 | 154 ms |
+| Late leaderboard | 200 | 137 ms |
+| Department trend | 200 | 172 ms |
+
+All five corresponding explain-plan screenings reported `IXSCAN=True` and `COLLSCAN=False`.
+
+These timings are single-run measurements on a local machine, not guaranteed performance thresholds. The explain-plan checks were screenings rather than exhaustive plan analysis.
+
+The completed tests provide evidence of local functionality, concurrency handling, and performance with 100,000 records. They do not guarantee correctness for every R1–R10 edge case or hidden evaluation scenario.
 
 ## Implementation notes
 
